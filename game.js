@@ -39,7 +39,7 @@
 
   function readBest() { try { return Number(localStorage.getItem('defenseBest') || 0); } catch { return 0; } }
   function reset() {
-    gold = 180; lives = 15; wave = 0; score = 0; towers = []; enemies = []; flashes = [];
+    gold = 180; lives = 18; wave = 0; score = 0; towers = []; enemies = []; flashes = [];
     active = false; spawnLeft = 0; spawnTimer = 0; ended = false; won = false;
     selectedKind = 'dart'; selectedTower = null; best = readBest();
     setMessage('타워를 고르고 맵의 빈 칸에 놓으세요!');
@@ -51,7 +51,7 @@
     ui.lives.textContent = lives;
     ui.wave.textContent = `${wave} / 10`;
     ui.best.textContent = best;
-    ui.waveBtn.textContent = ended ? '↻ 다시 하기' : active ? `🌊 웨이브 ${wave} 진행 중` : wave >= 10 ? '🏆 모두 막았어요!' : '▶ 다음 웨이브';
+    ui.waveBtn.textContent = ended ? '↻ 다시 하기' : active ? `🌊 ${wave}웨이브 중` : wave >= 10 ? '🏆 모두 막았어요!' : '▶ 다음 웨이브';
     ui.waveBtn.disabled = active || (wave >= 10 && !ended);
     ui.upgradeBtn.disabled = !selectedTower || selectedTower.level >= 3;
     ui.sellBtn.disabled = !selectedTower;
@@ -63,7 +63,7 @@
     if (active || wave >= 10) return;
     wave++;
     active = true;
-    spawnLeft = 4 + wave;
+    spawnLeft = 4 + wave + Math.max(0, wave - 6) * 2;
     spawnTimer = .35;
     selectedTower = null;
     setMessage(`웨이브 ${wave}! 적 ${spawnLeft}마리가 다가와요.`);
@@ -71,15 +71,20 @@
   }
 
   function spawnEnemy() {
-    const n = 4 + wave - spawnLeft;
+    const total = 4 + wave + Math.max(0, wave - 6) * 2;
+    const n = total - spawnLeft;
+    const late = Math.max(0, wave - 6);
     let type = 'grunt';
     if (wave >= 3 && n % 4 === 2) type = 'runner';
     if (wave >= 4 && n % 5 === 4) type = 'tank';
+    if (wave >= 9 && n === total - 1) type = 'boss';
     const stats = type === 'runner'
-      ? { hp:34 + wave*8, speed:1.18, reward:13, color:'#ec6294', icon:'🐇' }
+      ? { hp:40 + wave*10 + late*18, speed:1.18 + Math.min(wave*.025,.2), reward:7, color:'#ec6294', icon:'🐇' }
       : type === 'tank'
-        ? { hp:115 + wave*18, speed:.58, reward:24, color:'#9865d8', icon:'🐻' }
-        : { hp:54 + wave*12, speed:.78, reward:16, color:'#e88c4b', icon:'👾' };
+        ? { hp:135 + wave*22 + late*35, speed:.58, reward:12, color:'#9865d8', icon:'🐻' }
+        : type === 'boss'
+          ? { hp:1800 + wave*100, speed:.46, reward:30, color:'#c64b75', icon:'🐲' }
+          : { hp:54 + wave*14 + late*28, speed:.78, reward:5, color:'#e88c4b', icon:'👾' };
     enemies.push({ ...stats, maxHp:stats.hp, progress:0, slow:0, type });
     spawnLeft--;
   }
@@ -149,7 +154,7 @@
   function update(dt) {
     if (active) {
       spawnTimer -= dt;
-      if (spawnLeft > 0 && spawnTimer <= 0) { spawnEnemy(); spawnTimer = Math.max(.42, .9 - wave*.035); }
+      if (spawnLeft > 0 && spawnTimer <= 0) { spawnEnemy(); spawnTimer = Math.max(.32, .82 - wave*.04); }
       for (const enemy of enemies) {
         const speed = enemy.speed * (enemy.slow > 0 ? .48 : 1);
         enemy.progress += speed * dt;
@@ -174,7 +179,7 @@
         }
         if (target) {
           const [ex,ey] = positionAt(target.progress);
-          const damage = def.damage * (1 + (tower.level-1)*.58);
+          const damage = def.damage * (1 + (tower.level-1)*.72);
           target.hp -= damage;
           if (tower.kind === 'frost') target.slow = Math.max(target.slow, 1.35);
           flashes.push({x:tower.col+.5,y:tower.row+.5,tx:ex,ty:ey,color:def.color,life:.12});
@@ -184,7 +189,7 @@
       if (lives <= 0) endGame(false);
       else if (spawnLeft === 0 && enemies.length === 0) {
         active = false;
-        gold += 34 + wave*7;
+        gold += 14 + wave*3;
         score += wave*100;
         setMessage(wave === 10 ? '마지막 웨이브를 막았어요!' : `웨이브 ${wave} 방어 성공! 보너스 코인을 받았어요.`);
         if (wave >= 10) endGame(true);
@@ -251,10 +256,12 @@
   }
   function drawEnemy(e) {
     const [gx,gy]=positionAt(e.progress),x=gx*CELL,y=gy*CELL;
+    const radius=e.type==='boss'?25:19;
     ctx.fillStyle='rgba(43,29,82,.22)';ctx.beginPath();ctx.ellipse(x,y+17,22,9,0,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle=e.color;ctx.strokeStyle='#2b1d52';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x,y,19,0,Math.PI*2);ctx.fill();ctx.stroke();
-    ctx.font='21px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(e.icon,x,y+1);ctx.textBaseline='alphabetic';
-    ctx.fillStyle='#2b1d52';ctx.fillRect(x-23,y-30,46,7);ctx.fillStyle=e.slow>0?'#6cf1ff':'#55e292';ctx.fillRect(x-21,y-28,42*Math.max(0,e.hp/e.maxHp),3);
+    ctx.fillStyle=e.color;ctx.strokeStyle='#2b1d52';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.font=`${e.type==='boss'?29:21}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(e.icon,x,y+1);ctx.textBaseline='alphabetic';
+    const barWidth=e.type==='boss'?58:46;
+    ctx.fillStyle='#2b1d52';ctx.fillRect(x-barWidth/2,y-30,barWidth,7);ctx.fillStyle=e.slow>0?'#6cf1ff':'#55e292';ctx.fillRect(x-barWidth/2+2,y-28,(barWidth-4)*Math.max(0,e.hp/e.maxHp),3);
     if (e.slow>0) { ctx.fillStyle='#d9fbff';ctx.font='13px sans-serif';ctx.fillText('❄',x+19,y-15); }
   }
   function frame(now) {
