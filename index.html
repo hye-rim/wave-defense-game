@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#6056c9">
+  <title>웨이브 디펜스</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+    :root { --ink:#2b1d52; --yellow:#ffd23f; --pink:#ff5fa2; --green:#45c98d; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+    html,body { margin:0; width:100%; height:100%; overflow:hidden; touch-action:manipulation; }
+    body { color:var(--ink); font-family:'Jua',-apple-system,'Apple SD Gothic Neo',sans-serif; background:repeating-linear-gradient(-30deg,rgba(255,255,255,.07) 0 24px,transparent 24px 52px),linear-gradient(180deg,#4f8cff,#6b5cff 55%,#8a4fe0); }
+    #app { height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:8px; }
+    header { width:min(100%,720px); display:flex; align-items:center; gap:6px; }
+    .pill { height:36px; display:flex; align-items:center; gap:6px; padding:0 12px; border:3px solid var(--ink); border-radius:999px; box-shadow:0 4px var(--ink); background:#fff; font-size:16px; white-space:nowrap; }
+    .pill.gold { background:var(--yellow); flex:1; }
+    #board { display:block; width:min(calc(100vw - 16px),min(720px,calc((100dvh - 235px) * 1.28))); max-height:54dvh; aspect-ratio:12/9; border:4px solid var(--ink); border-radius:20px; box-shadow:0 7px var(--ink); background:#96d99c; touch-action:none; }
+    #palette { display:flex; width:min(100%,720px); gap:6px; }
+    button { color:var(--ink); font:inherit; border:3px solid var(--ink); border-radius:15px; background:#fff; box-shadow:0 4px var(--ink); padding:7px 10px; cursor:pointer; touch-action:manipulation; }
+    button:active { transform:translateY(3px); box-shadow:0 1px var(--ink); }
+    button.selected { background:var(--yellow); }
+    .tower { flex:1; min-width:0; font-size:15px; line-height:1.15; }
+    .tower small { display:block; margin-top:3px; font-size:11px; color:#665b8e; }
+    #actions { display:flex; width:min(100%,720px); gap:6px; }
+    #actions button { flex:1; min-width:0; font-size:14px; padding:7px 8px; }
+    #waveBtn { background:var(--green); }
+    #upgradeBtn { background:#d7c6ff; }
+    #sellBtn { background:#ffd3e4; }
+    #message { min-height:20px; color:white; text-shadow:0 2px 2px #342367; font-size:14px; text-align:center; }
+    #help { color:#fff; text-shadow:0 1px 2px #342367; font-size:11px; text-align:center; }
+    @media(max-height:650px) { #app { gap:5px; padding:5px; } #board { max-height:48dvh; width:min(calc(100vw - 12px),min(650px,calc((100dvh - 190px) * 1.28))); } .pill {height:31px;font-size:14px;padding:0 9px} button {padding:5px 8px} .tower {font-size:13px} .tower small {font-size:10px} #message{min-height:16px;font-size:12px} }
+  </style>
+</head>
+<body>
+  <main id="app">
+    <header>
+      <div class="pill gold">🪙 <b id="gold">180</b></div>
+      <div class="pill">❤️ <b id="lives">15</b></div>
+      <div class="pill">🌊 <b id="wave">0 / 10</b></div>
+      <div class="pill">🏆 <b id="best">0</b></div>
+    </header>
+    <canvas id="board" aria-label="타워를 배치하는 웨이브 디펜스 맵"></canvas>
+    <section id="palette" aria-label="타워 선택">
+      <button class="tower selected" data-tower="dart">🏹 화살 <small>70 · 빠른 공격</small></button>
+      <button class="tower" data-tower="cannon">💣 대포 <small>110 · 강한 공격</small></button>
+      <button class="tower" data-tower="frost">❄️ 냉기 <small>90 · 둔화</small></button>
+    </section>
+    <section id="actions">
+      <button id="waveBtn">▶ 다음 웨이브</button>
+      <button id="upgradeBtn" disabled>⬆ 강화</button>
+      <button id="sellBtn" disabled>↩ 판매</button>
+    </section>
+    <div id="message" role="status">타워를 고르고 맵의 빈 칸에 놓으세요!</div>
+    <div id="help">길 위에는 타워를 놓을 수 없어요 · 타워를 눌러 강화하거나 판매</div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
